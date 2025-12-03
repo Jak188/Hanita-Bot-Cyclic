@@ -3,8 +3,6 @@ import telegram
 from pymongo import MongoClient
 import logging
 from flask import Flask, request
-import json
-from bson.json_util import dumps
 
 # Log settings
 logging.basicConfig(level=logging.INFO)
@@ -18,7 +16,7 @@ MONGO_URI = os.environ.get("MONGO_URI")
 if MONGO_URI:
     try:
         client = MongoClient(MONGO_URI)
-        db = client["bot_users_db"]  # አዲስ ዳታቤዝ ስም ለቦቱ
+        db = client["bot_users_db"]
         users_collection = db["user_data"]
         logger.info("MongoDB client initialized for Bot successfully.")
     except Exception as e:
@@ -43,9 +41,9 @@ else:
 app = Flask(__name__)
 
 
-# የ Telegram Webhook Handler (ይህንን Bot Service ሆኖ እንዲሰራ ያደርገዋል)
+# የ Telegram Webhook Handler
 def handle_updates(update):
-    # /start commandን በትክክል መፈተሽ (Case-insensitive እና whitespace ችግርን የሚፈታ)
+    # /start commandን በትክክል መፈተሽ
     if update.message and update.message.text and update.message.text.lower().strip() == "/start":
         
         # 1. ዳታቤዝ ውስጥ ማስገባት
@@ -74,14 +72,13 @@ def handle_updates(update):
             logger.info(f"Sent /start message to user {user_id}")
         except Exception as e:
             logger.error(f"Error sending message: {e}")
-        
-    # አስፈላጊ ከሆነ ተጨማሪ መልዕክቶችን እዚህ መጨመር ይቻላል (ለምሳሌ: else: bot.send_message...)
 
 
 # Webhookን ለመቀበል የሚደረግ Flask Route
-@app.route('/', methods=['GET', 'POST'])
+# ይህ አሁን የ Tokenን ክፍል ተጠቅሞ ጥያቄውን ይቀበላል
+@app.route('/<token>', methods=['GET', 'POST']) 
 @app.route('/webhook', methods=['POST'])
-def webhook_handler():
+def webhook_handler(token=None):
     if bot and request.method == "POST":
         # ከ Telegram የመጣውን JSON ዳታ መቀበል
         data = request.get_json(force=True)
@@ -91,9 +88,5 @@ def webhook_handler():
             update = telegram.Update.de_json(data, bot)
             handle_updates(update)
         except Exception as e:
-            # ይህ ብዙውን ጊዜ Update Object በትክክል ካልተቀየረ የሚፈጠር ስህተት ነው
             logger.error(f"Error processing webhook update: {e}")
     return 'ok'
-
-# አፕሊኬሽኑን ማስኬድ (Gunicorn ይህንን 'app' ይጠቀማል)
-# የ if __name__ == '__main__': ክፍል ተወግዷል
