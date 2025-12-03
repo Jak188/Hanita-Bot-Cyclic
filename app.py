@@ -10,17 +10,24 @@ app = Flask(__name__)
 MONGO_URI = os.environ.get("MONGO_URI")
 
 if MONGO_URI:
-    client = MongoClient(MONGO_URI)
-    db = client["api_test_db"]
-    test_collection = db["status_collection"]
-    print("MongoDB client initialized successfully.")
+    try:
+        client = MongoClient(MONGO_URI)
+        # ፒንግ በማድረግ ግንኙነቱን መፈተሽ
+        client.admin.command('ping')
+        
+        db = client["api_test_db"]
+        test_collection = db["status_collection"]
+        print("MongoDB client initialized successfully.")
+    except Exception as e:
+        print(f"FATAL ERROR: MongoDB connection failed: {e}")
+        client = None
 else:
-    print("FATAL ERROR: MONGO_URI not found!")
-    # ለጊዜው ባዶ client እንፈጥራለን
+    print("FATAL ERROR: MONGO_URI environment variable not found!")
     client = None
 
 # 1. መነሻ ገጽ (Home Route)
-@app.route('/')
+# methods=['GET'] የሚለውን በመጨመር ብሮውዘር ጥያቄ እንዲቀበል ይደረጋል
+@app.route('/', methods=['GET'])
 def home():
     if client:
         try:
@@ -47,6 +54,6 @@ def home():
 
 # 2. አፕሊኬሽኑን ማስኬድ
 if __name__ == '__main__':
-    # Railway ፖርትን ከ Environment Variables ያገኛል (በአብዛኛው 8080)
+    # Railway ፖርትን ከ Environment Variables ያገኛል
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
