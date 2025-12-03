@@ -87,7 +87,8 @@ if __name__ == '__main__':
     # Webhookን መጫን (በመጀመሪያው Deployment ላይ ብቻ)
     if bot:
         try:
-            WEBHOOK_URL = f"https://{os.environ.get('RAILWAY_STATIC_URL')}"
+            # Webhookን በትክክለኛው URL ማስቀመጥ
+            WEBHOOK_URL = "https://hanita-bot-cyclic-production.up.railway.app" 
             bot.set_webhook(url=WEBHOOK_URL)
             logger.info(f"Webhook set to: {WEBHOOK_URL}")
         except Exception as e:
