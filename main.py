@@ -76,7 +76,8 @@ def handle_updates(update):
 
 
 # Webhookን ለመቀበል የሚደረግ Flask Route
-@app.route('/', methods=['POST'])
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/webhook', methods=['POST'])
 def webhook_handler():
     if bot and request.method == "POST":
         # ከ Telegram የመጣውን JSON ዳታ መቀበል
