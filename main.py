@@ -2,6 +2,9 @@ import os
 import telegram
 from pymongo import MongoClient
 import logging
+from flask import Flask, request
+import json
+from bson.json_util import dumps
 
 # Log settings
 logging.basicConfig(level=logging.INFO)
@@ -36,6 +39,9 @@ if BOT_TOKEN:
 else:
     bot = None
 
+# የ Flask App መፍጠር
+app = Flask(__name__)
+
 
 # የ Telegram Webhook Handler (ይህንን Bot Service ሆኖ እንዲሰራ ያደርገዋል)
 def handle_updates(update):
@@ -69,31 +75,17 @@ def handle_updates(update):
             logger.error(f"Error sending message: {e}")
 
 
-# ይህ የ Bot Service በ Flask/Gunicorn ውስጥ ሲሰራ ያስፈልጋል
-from flask import Flask, request
-
-app = Flask(__name__)
-
 # Webhookን ለመቀበል የሚደረግ Flask Route
 @app.route('/', methods=['POST'])
 def webhook_handler():
-    if request.method == "POST":
-        update = telegram.Update.de_json(request.get_json(force=True), bot)
-        handle_updates(update)
+    if bot and request.method == "POST":
+        # ከ Telegram የመጣውን JSON ዳታ ወደ Telegram Update object መቀየር
+        try:
+            update = telegram.Update.de_json(request.get_json(force=True), bot)
+            handle_updates(update)
+        except Exception as e:
+            logger.error(f"Error processing webhook update: {e}")
     return 'ok'
 
-# አፕሊኬሽኑን ማስኬድ
-if __name__ == '__main__':
-    # Webhookን መጫን (በመጀመሪያው Deployment ላይ ብቻ)
-    if bot:
-        try:
-            # Webhookን በትክክለኛው URL ማስቀመጥ
-            WEBHOOK_URL = "https://hanita-bot-cyclic-production.up.railway.app" 
-            bot.set_webhook(url=WEBHOOK_URL)
-            logger.info(f"Webhook set to: {WEBHOOK_URL}")
-        except Exception as e:
-            logger.error(f"Error setting webhook: {e}")
-
-    # Flask/Gunicornን ማስኬድ
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host='0.0.0.0', port=port)
+# አፕሊኬሽኑን ማስኬድ (Gunicorn ይህንን 'app' ይጠቀማል)
+# የ if __name__ == '__main__': ክፍል ተወግዷል
