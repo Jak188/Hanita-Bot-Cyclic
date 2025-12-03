@@ -45,7 +45,8 @@ app = Flask(__name__)
 
 # የ Telegram Webhook Handler (ይህንን Bot Service ሆኖ እንዲሰራ ያደርገዋል)
 def handle_updates(update):
-    if update.message and update.message.text == "/start":
+    # /start commandን በትክክል መፈተሽ (Case-insensitive እና whitespace ችግርን የሚፈታ)
+    if update.message and update.message.text and update.message.text.lower().strip() == "/start":
         
         # 1. ዳታቤዝ ውስጥ ማስገባት
         user_id = update.message.from_user.id
@@ -73,6 +74,8 @@ def handle_updates(update):
             logger.info(f"Sent /start message to user {user_id}")
         except Exception as e:
             logger.error(f"Error sending message: {e}")
+        
+    # አስፈላጊ ከሆነ ተጨማሪ መልዕክቶችን እዚህ መጨመር ይቻላል (ለምሳሌ: else: bot.send_message...)
 
 
 # Webhookን ለመቀበል የሚደረግ Flask Route
