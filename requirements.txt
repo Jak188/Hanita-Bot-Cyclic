@@ -1,3 +1,4 @@
 pytelegrambotapi
 google-genai
 Flask
+pymongo[srv]
